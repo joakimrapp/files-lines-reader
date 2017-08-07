@@ -59,6 +59,7 @@ module.exports = ( maxThroughput ) => {
 			throughput: throttler.throughput,
 			current: current.status
 		} ),
+		time: ( milliseconds ) => current.time( milliseconds ),
 		pause: () => ( paused = true ),
 		resume: () => ( ( paused = false ), run() ),
 		maxThroughput: ( maxThroughput ) =>

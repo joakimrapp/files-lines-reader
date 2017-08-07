@@ -70,10 +70,21 @@ module.exports = class Current {
 	get paused() { return this.context.paused; }
 	get processed() { return this.context.processed; }
 	get pending() { return this.context.pending; }
+	time( milliseconds = 1000 ) {
+		return new Promise( resolve => {
+			setTimeout( ( ts, processedbytes ) => {
+				const processedbytespermillisecond = ( this.context.processedbytes - processedbytes ) / milliseconds;
+				resolve( this.context.size / processedbytespermillisecond );
+			}, milliseconds, Date.now(), this.context.processedbytes );
+		} );
+	}
 	get status() {
 		return {
 			absolutepath: this.context.absolutepath,
 			filename: this.context.absolutepath ? require( 'path' ).basename( this.context.absolutepath ) : undefined,
+			size: this.context.size,
+			processedbytes: this.context.processedbytes,
+			processed: this.context.processed,
 			completed: this.context.processedbytes / this.context.size,
 			open: this.context.open,
 			pending: this.context.pending,
