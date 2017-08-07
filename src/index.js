@@ -5,6 +5,7 @@ module.exports = ( maxThroughput ) => {
 	let totalbytes = 0;
 	let processedbytes = 0;
 	const queue = [];
+	let paused = false;
 	let current = new Current();
 	let filter = () => true, map = ( item ) => item, each = () => {}, error = ( ( { line, error } ) => Promise.reject( error ) );
 	const run = () => {
@@ -32,7 +33,11 @@ module.exports = ( maxThroughput ) => {
 					.catch( ( err ) => error( { error: err, line } ) ) )
 				.on.close( () => {
 					processedbytes += current.size;
-					current.resolve().then( run );
+					current.resolve()
+						.then( () => {
+							if( !paused )
+								run();
+						} );
 				} );
 		}
 	};
@@ -50,6 +55,8 @@ module.exports = ( maxThroughput ) => {
 			throughput: throttler.throughput,
 			current: current.status
 		} ),
+		pause: () => ( paused = true ),
+		resume: () => ( ( paused = false ), run() ),
 		maxThroughput: ( maxThroughput ) =>
 			( ( throttler.enable().maxThroughput = maxThroughput ), pub )
 	};
