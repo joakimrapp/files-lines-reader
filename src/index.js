@@ -66,8 +66,7 @@ module.exports = ( maxThroughput ) => {
 					queued: queue.length,
 					completed: ( processedbytes + current.processedbytes ) / totalbytes,
 					throughput: throttler.throughput,
-					current: current.status,
-					milliseconds
+					current: Object.assign( { milliseconds }, current.status )
 				} ) );
 		},
 		pause: () => ( paused = true ),
