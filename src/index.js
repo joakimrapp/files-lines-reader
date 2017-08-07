@@ -11,8 +11,7 @@ module.exports = ( maxThroughput ) => {
 	let file = () => {}, filter = () => true, map = ( item ) => item, each = () => {}, error = ( ( { line, error } ) => Promise.reject( error ) );
 	const run = () => {
 		if( ( current.resolved ) && ( !!queue.length ) ) {
-			current = new Current( queue.sort( ( { absolutepath: p1 }, { absolutepath: p2 } ) =>
-		 		path.basename( p1 ) < path.basename( p2 ) ? -1 : 1 ).shift() )
+			current = new Current( queue.shift() )
 				.on.line( ( line ) => Promise.resolve( line )
 			 		.then( filter )
 				 	.then( ( valid ) => {
