@@ -74,6 +74,7 @@ module.exports = class Current {
 		return new Promise( resolve => {
 			setTimeout( ( ts, processedbytes ) => {
 				const processedbytespermillisecond = ( this.context.processedbytes - processedbytes ) / milliseconds;
+				console.log( milliseconds, processedbytespermillisecond );
 				resolve( this.context.size / processedbytespermillisecond );
 			}, milliseconds, Date.now(), this.context.processedbytes );
 		} );
