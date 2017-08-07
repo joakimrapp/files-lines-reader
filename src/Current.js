@@ -74,6 +74,7 @@ module.exports = class Current {
 		return {
 			absolutepath: this.context.absolutepath,
 			filename: this.context.absolutepath ? require( 'path' ).basename( this.context.absolutepath ) : undefined,
+			completed: this.context.processedbytes / this.context.size,
 			open: this.context.open,
 			pending: this.context.pending,
 			paused: this.context.paused
