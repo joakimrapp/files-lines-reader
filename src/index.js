@@ -62,12 +62,17 @@ module.exports = ( maxThroughput ) => {
 		estimatedStatus: ( milliseconds ) => {
 			const parsed = parseInt( milliseconds, 10 );
 			return current.estimate( isNaN( parsed ) || parsed < 0 ? 1000 : parsed )
-				.then( milliseconds => ( {
-					queued: queue.length,
-					completed: ( processedbytes + current.processedbytes ) / totalbytes,
-					throughput: throttler.throughput,
-					current: Object.assign( { milliseconds }, current.status )
-				} ) );
+				.then( milliseconds => {
+					return ( {
+						queued: queue.length,
+						completed: ( processedbytes + current.processedbytes ) / totalbytes,
+						throughput: throttler.throughput,
+						current: Object.assign( {
+							milliseconds,
+							time: ( new Date( milliseconds ) ).toISOString().slice( 11, 23 )
+						}, current.status )
+					} );
+				} );
 		},
 		pause: () => ( paused = true ),
 		resume: () => ( ( paused = false ), run() ),
