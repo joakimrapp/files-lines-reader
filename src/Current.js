@@ -70,12 +70,11 @@ module.exports = class Current {
 	get paused() { return this.context.paused; }
 	get processed() { return this.context.processed; }
 	get pending() { return this.context.pending; }
-	time( milliseconds = 1000 ) {
+	estimate( milliseconds = 1000 ) {
 		return new Promise( resolve => {
 			setTimeout( ( ts, processedbytes ) => {
-				const processedbytespermillisecond = ( this.context.processedbytes - processedbytes ) / milliseconds;
-				console.log( milliseconds, processedbytespermillisecond );
-				resolve( this.context.size / processedbytespermillisecond );
+				const processedbytespermillisecond = ( this.context.processedbytes - processedbytes ) / ( Date.now() - ts );
+				resolve( ( this.context.size - this.context.processedbytes ) / processedbytespermillisecond );
 			}, milliseconds, Date.now(), this.context.processedbytes );
 		} );
 	}
