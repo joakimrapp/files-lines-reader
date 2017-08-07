@@ -1,5 +1,6 @@
 module.exports = ( maxThroughput ) => {
 	const promiseThrottler = require( '@jrapp/promise-throttler' );
+	const path = require( 'path' );
 	const Current = require( './Current.js' );
 	const throttler = maxThroughput > 0 ? promiseThrottler( maxThroughput, 1000 ) : promiseThrottler( 1, 1000 ).disable();
 	let totalbytes = 0;
@@ -7,10 +8,11 @@ module.exports = ( maxThroughput ) => {
 	const queue = [];
 	let paused = false;
 	let current = new Current();
-	let filter = () => true, map = ( item ) => item, each = () => {}, error = ( ( { line, error } ) => Promise.reject( error ) );
+	let file = () => {}, filter = () => true, map = ( item ) => item, each = () => {}, error = ( ( { line, error } ) => Promise.reject( error ) );
 	const run = () => {
 		if( ( current.resolved ) && ( !!queue.length ) ) {
-			current = new Current( queue.shift() )
+			current = new Current( queue.sort( ( { absolutepath: p1 }, { absolutepath: p2 } ) =>
+		 		path.basename( p1 ) < path.basename( p2 ) ? -1 : 1 ).shift() )
 				.on.line( ( line ) => Promise.resolve( line )
 			 		.then( filter )
 				 	.then( ( valid ) => {
@@ -39,12 +41,14 @@ module.exports = ( maxThroughput ) => {
 								run();
 						} );
 				} );
+			file( current.status );
 		}
 	};
 	const { fs } = require( '@jrapp/callbacks-to-promises' );
 	const pub = {
 		process: ( absolutepath ) => new Promise( ( resolve, reject ) => fs.stat( absolutepath )
 			.then( ( { size } ) => ( ( totalbytes += size ), queue.push( { absolutepath, resolve, reject, size } ), run() ) ) ),
+		file: ( fn ) => ( ( file = fn ), pub ),
 		filter: ( fn ) => ( ( filter = fn ), pub ),
 		map: ( fn ) => ( ( map = fn ), pub ),
 		each: ( fn ) => ( ( each = fn ), pub ),
