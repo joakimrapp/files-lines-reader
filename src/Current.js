@@ -76,7 +76,7 @@ module.exports = class Current {
 		const now = Date.now();
 		const { processedbytes, size } = this.context;
 		const bytesLeft = size - processedbytes;
-		return context.history.processedBytes
+		return this.context.history.processedBytes
 			.map( ( [ timestamp, processedBytesThen ] ) =>
 				Math.round( ( bytesLeft ) / ( ( processedbytes - processedBytesThen ) / ( now - timestamp ) ) ) )
 			.filter( ( milliseconds ) => milliseconds > 0 )
