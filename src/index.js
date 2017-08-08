@@ -1,3 +1,4 @@
+const readable = require( './readable.js' );
 module.exports = ( maxThroughput ) => {
 	const promiseThrottler = require( '@jrapp/promise-throttler' );
 	const path = require( 'path' );
@@ -54,9 +55,10 @@ module.exports = ( maxThroughput ) => {
 		each: ( fn ) => ( ( each = fn ), pub ),
 		error: ( fn ) => ( ( error = fn ), pub ),
 		status: () => ( {
+			paused,
 			queued: queue.length,
-			completed: ( processedbytes + current.processedbytes ) / totalbytes,
-			throughput: throttler.throughput,
+			completed: readable.percent( ( processedbytes + current.processedbytes ) / totalbytes ),
+			throughput: `${throttler.throughput} rows/s`,
 			current: current.status
 		} ),
 		pause: () => ( paused = true ),

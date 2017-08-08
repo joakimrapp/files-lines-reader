@@ -1,3 +1,4 @@
+const readable = require( './readable.js' );
 module.exports = class Current {
 	constructor( { resolve, reject, absolutepath, size = 0 } = {} ) {
 		this.context = {
@@ -115,10 +116,10 @@ module.exports = class Current {
 		return {
 			absolutepath: this.context.absolutepath,
 			filename: this.context.absolutepath ? require( 'path' ).basename( this.context.absolutepath ) : undefined,
-			size: this.context.size,
-			processedbytes: this.context.processedbytes,
+			size: readable.bytes( this.context.size ),
+			processedbytes: readable.bytes( this.context.processedbytes ),
 			processed: this.context.processed,
-			completed: this.context.processedbytes / this.context.size,
+			completed: readable.percent( this.context.processedbytes / this.context.size ),
 			open: this.context.open,
 			pending: this.context.pending,
 			paused: this.context.paused,
