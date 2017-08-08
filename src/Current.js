@@ -60,7 +60,8 @@ module.exports = class Current {
 		};
 	}
 	startSampleMetrics() {
-		this.context.history.intervalObject = setInterval( ( current ) => current.sampleMetric(), 1000, this );
+		const that = this;
+		this.context.history.intervalObject = setInterval( () => that.sampleMetric(), 1000 );
 	}
 	stopSampleMetrics() {
 		clearInterval( this.context.history.intervalObject );
@@ -89,14 +90,12 @@ module.exports = class Current {
 		if( !this.context.paused ) {
 			this.context.paused = true;
 			this.context.readlineInterface.pause();
-			this.stopSampleMetrics();
 		}
 	};
 	resume() {
 		if( this.context.paused ) {
 			this.context.paused = false;
 			this.context.readlineInterface.resume();
-			this.startSampleMetrics();
 		}
 	};
 	resolve() {

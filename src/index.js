@@ -58,7 +58,7 @@ module.exports = ( maxThroughput ) => {
 			paused,
 			queued: queue.length,
 			completed: readable.percent( ( processedbytes + current.processedbytes ) / totalbytes ),
-			throughput: `${throttler.throughput} rows/s`,
+			throughput: `${throttler.throughput.toFixed( 2 )} rows/s`,
 			current: current.status
 		} ),
 		pause: () => ( paused = true ),
