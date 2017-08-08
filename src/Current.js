@@ -11,6 +11,10 @@ module.exports = class Current {
 			processed: 0,
 			pending: 0,
 			resolved: true,
+			history: {
+				processedBytes: [],
+				intervalObject: undefined
+			},
 			on: {
 				close: () => {},
 				line: () => {}
@@ -24,10 +28,14 @@ module.exports = class Current {
 			context.readlineInterface = require( 'readline' ).createInterface( { input: require( 'fs' ).createReadStream( context.absolutepath ) } );
 			context.open = true;
 			context.resolved = false;
+			const onClose = () => {
+				that.stopSampleMetrics();
+				context.on.close( that );
+			};
 			context.readlineInterface.on( 'close', () => {
 				context.open = false;
 				if( !context.pending )
-					context.on.close( that );
+					onClose();
 			} );
 			context.readlineInterface.on( 'line', ( line ) => {
 				context.pending++;
@@ -39,23 +47,56 @@ module.exports = class Current {
 						context.pending--;
 						context.processedbytes += line.length + 1;
 						if( ( !context.pending ) && ( !context.open ) )
-							context.on.close( that );
+							onClose();
 					} )
 					.catch( context.reject );
 			} );
+			that.startSampleMetrics();
 		}
 		return {
 			close: ( onFulfilled ) => ( ( context.on.close = onFulfilled ), that ),
 			line: ( listener ) => ( ( context.on.line = listener ), that )
 		};
 	}
+	startSampleMetrics() {
+		this.context.history.intervalObject = setInterval( ( current ) => current.sampleMetric(), 1000, this );
+	}
+	stopSampleMetrics() {
+		clearInterval( this.context.history.intervalObject );
+		this.context.history.processedBytes = [];
+	}
+	sampleMetric() {
+		const context = this.context;
+		context.history.processedBytes.unshift( [ Date.now(), context.processedbytes ] );
+		while( context.history.processedBytes.length > 10 )
+			context.history.processedBytes.pop();
+	}
+	estimate() {
+		const now = Date.now();
+		const { processedbytes, size } = this.context;
+		const bytesLeft = size - processedbytes;
+		return context.history.processedBytes
+			.map( ( [ timestamp, processedBytesThen ] ) =>
+				Math.round( ( bytesLeft ) / ( ( processedbytes - processedBytesThen ) / ( now - timestamp ) ) ) )
+			.filter( ( milliseconds ) => milliseconds > 0 )
+			.map( ( milliseconds ) => ( {
+				milliseconds,
+				time: ( new Date( milliseconds ) ).toISOString().slice( 11, 23 )
+			} ) );
+	}
 	pause() {
-		this.context.paused = true;
-		this.context.readlineInterface.pause();
+		if( !this.context.paused ) {
+			this.context.paused = true;
+			this.context.readlineInterface.pause();
+			this.stopSampleMetrics();
+		}
 	};
 	resume() {
-		this.context.paused = false;
-		this.context.readlineInterface.resume();
+		if( this.context.paused ) {
+			this.context.paused = false;
+			this.context.readlineInterface.resume();
+			this.startSampleMetrics();
+		}
 	};
 	resolve() {
 		this.context.resolved = true;
@@ -70,14 +111,6 @@ module.exports = class Current {
 	get paused() { return this.context.paused; }
 	get processed() { return this.context.processed; }
 	get pending() { return this.context.pending; }
-	estimate( milliseconds = 1000 ) {
-		return new Promise( resolve => {
-			setTimeout( ( ts, processedbytes ) => {
-				const processedbytespermillisecond = ( this.context.processedbytes - processedbytes ) / ( Date.now() - ts );
-				resolve( Math.round( ( this.context.size - this.context.processedbytes ) / processedbytespermillisecond ) );
-			}, milliseconds, Date.now(), this.context.processedbytes );
-		} );
-	}
 	get status() {
 		return {
 			absolutepath: this.context.absolutepath,
@@ -88,7 +121,8 @@ module.exports = class Current {
 			completed: this.context.processedbytes / this.context.size,
 			open: this.context.open,
 			pending: this.context.pending,
-			paused: this.context.paused
+			paused: this.context.paused,
+			estimate: this.estimate()
 		};
 	}
 };

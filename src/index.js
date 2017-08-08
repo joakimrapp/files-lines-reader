@@ -36,6 +36,7 @@ module.exports = ( maxThroughput ) => {
 					processedbytes += current.size;
 					current.resolve()
 						.then( () => {
+							current = new Current();
 							if( !paused )
 								run();
 						} );
@@ -58,21 +59,6 @@ module.exports = ( maxThroughput ) => {
 			throughput: throttler.throughput,
 			current: current.status
 		} ),
-		estimatedStatus: ( milliseconds ) => {
-			const parsed = parseInt( milliseconds, 10 );
-			return current.estimate( isNaN( parsed ) || parsed < 0 ? 1000 : parsed )
-				.then( milliseconds => {
-					return {
-						queued: queue.length,
-						completed: ( processedbytes + current.processedbytes ) / totalbytes,
-						throughput: throttler.throughput,
-						current: Object.assign( {
-							milliseconds,
-							time: ( new Date( isNaN( milliseconds ) ? 0 : milliseconds ) ).toISOString().slice( 11, 23 )
-						}, current.status )
-					};
-				} );
-		},
 		pause: () => ( paused = true ),
 		resume: () => ( ( paused = false ), run() ),
 		maxThroughput: ( maxThroughput ) =>
